@@ -1,0 +1,33 @@
+{
+    "name": "lemejs",
+    "version": "5.0.0",
+    "description": "Reactive Library to SPA.",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/devfreelex/leme-js.git" 
+    },
+    "keywords": [
+        "leme",
+        "leme-js",
+        "lemejs",
+        "lemeJs",
+        "lemeJS",
+        "reactive javascript library",
+        "reactive javascript library leme",
+        "reactive javascript library lemejs",
+        "reactive javascript lemejs",
+        "reactive lemejs"
+    ],
+    "author": "Rodrigo Rocha",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/devfreelex/leme-js/issues"
+    },
+    "homepage": "https://github.com/devfreelex/leme-js#readme",
+    "dependencies": {}
+}
+
