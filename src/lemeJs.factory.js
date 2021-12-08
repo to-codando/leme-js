@@ -57,7 +57,6 @@ const _renderChildren = (component, parentElement, options = {}) => {
         const selector = _createSelector(child.name)
         const elements = Array.from(parentElement.querySelectorAll(selector))
         elements.forEach( element => {
-            console.log(element)
             render(child, element, options)
         })
     })
@@ -99,8 +98,9 @@ const _observeState = (componentSources) => {
     })    
 }
 
-const _createComponentElement = (selector) => {
-    const regexSelector = /(^\w+-\w+$)/
+
+const _createComponentElement = (selector) => { 
+    const regexSelector = /^([a-z]+-)+([a-z]+)$/
     if(!selector || typeof selector !== 'string') throw new Error('component selector is not a string and must be.')
     if(!regexSelector.test(selector)) throw new Error('component selector has invalid format.')
     const element = document.createElement(selector)
