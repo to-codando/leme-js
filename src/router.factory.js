@@ -40,7 +40,7 @@ export const routerFactory = () => {
         const options = { routeParams }
 
         if(route) {
-            render(route.component, routerElement, options)
+            render(route.component, null, routerElement, options)
             return
         } 
 
