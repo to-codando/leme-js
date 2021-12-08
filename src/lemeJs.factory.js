@@ -56,28 +56,42 @@ const _renderChildren = (component, parentElement, options = {}) => {
     children.forEach( child => {
         const selector = _createSelector(child.name)
         const elements = Array.from(parentElement.querySelectorAll(selector))
-        elements.forEach( element => render(child, element, options))
+        elements.forEach( element => {
+            console.log(element)
+            render(child, element, options)
+        })
     })
 
 }
 
-const _injectTemplate = (component, element) => {
+const _injectTemplate = (component, element, parentElement, options) => {
     const { state, template } = component
+    component.element = element || _createComponentElement(component.selector)
 
-    const options = { 
+    const resources = { 
         state: state.get(), 
         methods: _getMethods(component),
         html
     }
+    
 
     _execHook(component, 'beforeOnRender')
     _bindStyles(component)
-    element.innerHTML = template(options)
+
+    if(!element) { 
+        component.element.innerHTML = template(resources)
+        parentElement.innerHTML = ''
+        parentElement.insertAdjacentElement('beforeend', component.element)
+        _execHook(component, 'afterOnRender')
+        return
+    }
+
+    element.innerHTML = template(resources)
     _execHook(component, 'afterOnRender')
 }
 
 const _observeState = (componentSources) => {
-    const [ component, children, element, dom ] = componentSources()
+    const [ component, element, dom ] = componentSources()
     component.state.on(() => {
         _injectTemplate(component, element)
         _bindDomEvents(component, dom)
@@ -85,13 +99,23 @@ const _observeState = (componentSources) => {
     })    
 }
 
-export const render = (factory, element, options =  {}) => {
-    const component = factory(options)
+const _createComponentElement = (selector) => {
+    const regexSelector = /(^\w+-\w+$)/
+    if(!selector || typeof selector !== 'string') throw new Error('component selector is not a string and must be.')
+    if(!regexSelector.test(selector)) throw new Error('component selector has invalid format.')
+    const element = document.createElement(selector)
+    return element
+}
+
+export const render = (factory, element, parentElement, options =  {}) => {
+    const component = factory(options)  
     const children = _getChildren(component)
     const dom = domFactory(element)
+
     component.selector = _createSelector(factory.name)
+
     _execHook(component, 'beforeOnInit')
-    _injectTemplate(component, element)
+    _injectTemplate(component, element, parentElement, options)
     _execHook(component, 'afterOnInit')
     _bindDomEvents(component, dom)
     _observeState(() => [component, children, element, dom])
