@@ -39,7 +39,8 @@ const _getChildren = (component) => {
     return component.children ? component.children() : []
 }
 
-const _bindDomEvents = (component, dom) => {
+const _bindDomEvents = (component) => {
+    const dom = domFactory(component.element)
     const methods = _getMethods(component)
     const events = component.events ? component.events({...dom, methods}) : {}
     Object.keys(events).forEach( eventName => events[eventName]())
@@ -51,7 +52,8 @@ const _execHook = (component, hookName) => {
     if(hooks.hasOwnProperty(hookName)) hooks[hookName]()
 }
 
-const _renderChildren = (component, parentElement, options = {}) => {
+const _renderChildren = (component, parentElement, options = {}) => { 
+    console.log(component, parentElement, options)
     const children = _getChildren(component)
     children.forEach( child => {
         const selector = _createSelector(child.name)
@@ -89,12 +91,12 @@ const _injectTemplate = (component, element, parentElement, options) => {
     _execHook(component, 'afterOnRender')
 }
 
-const _observeState = (componentSources) => {
-    const [ component, element, dom ] = componentSources()
+const _observeState = (component) => {
+    const dom = domFactory(component.element)
     component.state.on(() => {
-        _injectTemplate(component, element)
+        _injectTemplate(component, component.element)
         _bindDomEvents(component, dom)
-        _renderChildren(component, element, {})
+        _renderChildren(component, component.element, {})
     })    
 }
 
@@ -117,8 +119,8 @@ export const render = (factory, element, parentElement, options =  {}) => {
     _execHook(component, 'beforeOnInit')
     _injectTemplate(component, element, parentElement, options)
     _execHook(component, 'afterOnInit')
-    _bindDomEvents(component, dom)
-    _observeState(() => [component, children, element, dom])
+    _bindDomEvents(component)
+    _observeState(component)
     _renderChildren(component, element, {})
     _execHook(component, 'afterOnChildrenInit')
 }
