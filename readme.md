@@ -61,7 +61,7 @@ npm install lemejs
 O forma mais rápida para iniciar um projeto do zero é clonando o template padrão.
 
 ```
-npx degit github:devfrelex/leme-js-template
+npx degit github:to-codando/leme-js-template
 ```
 
 ## Próximos passos
