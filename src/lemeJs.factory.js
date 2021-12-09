@@ -53,7 +53,6 @@ const _execHook = (component, hookName) => {
 }
 
 const _renderChildren = (component, parentElement, options = {}) => { 
-    console.log(component, parentElement, options)
     const children = _getChildren(component)
     children.forEach( child => {
         const selector = _createSelector(child.name)
@@ -121,7 +120,7 @@ export const render = (factory, element, parentElement, options =  {}) => {
     _execHook(component, 'afterOnInit')
     _bindDomEvents(component)
     _observeState(component)
-    _renderChildren(component, element, {})
+    _renderChildren(component, parentElement, {})
     _execHook(component, 'afterOnChildrenInit')
 }
 
