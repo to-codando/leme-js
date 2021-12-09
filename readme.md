@@ -3,7 +3,7 @@
 Se você espera encontrar aqui mais do mesmo, definitivamente essa biblioteca não é para você.
 
 
-* Acesse a documentação em [lemejs.io](https://devfreelex.github.io/leme-js-doc/#/)
+* Acesse a documentação em [lemejs.io](https://to-codando.github.io/leme-js-doc/#/)
 
 
 ## Objetivo
@@ -70,6 +70,6 @@ Você pode descobrir como fazer mais  com os recursos de Leme JS clicando num do
 
 > Agora é contigo... o que vai fazer?
 
-- Ler a [documentação](https://devfreelex.github.io/leme-js-doc/#/resources/?id=a-documenta%c3%a7%c3%a3o)
-- Seguir o [tutorial](https://devfreelex.github.io/leme-js-doc/#/tutorial/)
+- Ler a [documentação](https://to-codando.github.io/leme-js-doc/#/)
+- Seguir o [tutorial](https://github.com/to-codando/leme-js-doc/tree/master/tutorial)
 
