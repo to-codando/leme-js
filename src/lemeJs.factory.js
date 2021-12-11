@@ -1,3 +1,4 @@
+import { getPropsFrom, observableFactory } from "lemejs";
 import { domFactory } from "./dom.factory.js";
 import { html, css } from './tagged.template.js'
 
@@ -32,23 +33,26 @@ const _createSelector = (text) => {
   };
 
 const _getMethods = (component) => {
-    return component.methods ? component.methods() : {}
+    const props = component.props ? component.props : {}
+    if(!component.methods) return {}
+    return component.methods({props})
 }
 
 const _getChildren = (component) => {
     return component.children ? component.children() : []
 }
 
-const _bindDomEvents = (component) => {
+const _bindDomEvents = (component = {}, props = {}) => {
     const dom = domFactory(component.element)
     const methods = _getMethods(component)
-    const events = component.events ? component.events({...dom, methods}) : {}
+    const events = component.events ? component.events({...dom, methods }) : {}
     Object.keys(events).forEach( eventName => events[eventName]())
 }
 
 const _execHook = (component, hookName) => {
     const methods = _getMethods(component)
-    const hooks = component.hooks ? component.hooks({methods}) : {}
+    const props = component.props || {}
+    const hooks = component.hooks ? component.hooks({methods, props }) : {}
     if(hooks.hasOwnProperty(hookName)) hooks[hookName]()
 }
 
@@ -64,16 +68,21 @@ const _renderChildren = (component, parentElement, options = {}) => {
 
 }
 
-const _injectTemplate = (component, element, parentElement, options) => {
+
+const _injectTemplate = (component, element, parentElement, options =  {}) => {
     const { state, template } = component
+    let props = {}
+
     component.element = element || _createComponentElement(component.selector)
+    if(options.props) props = Object.assign({}, component.props.get(), options.props)
+    if(!options.props) props = component.props ? Object.assign(component.props.get(), _getPropsFrom(component)) : {}
 
     const resources = { 
         state: state.get(), 
+        props,
         methods: _getMethods(component),
         html
     }
-    
 
     _execHook(component, 'beforeOnRender')
     _bindStyles(component)
@@ -88,15 +97,31 @@ const _injectTemplate = (component, element, parentElement, options) => {
 
     element.innerHTML = template(resources)
     _execHook(component, 'afterOnRender')
+    _bindDomEvents(component)
 }
 
 const _observeState = (component) => {
+
     const dom = domFactory(component.element)
+
     component.state.on(() => {
         _injectTemplate(component, component.element)
-        _bindDomEvents(component, dom)
+        _bindDomEvents(component)
         _renderChildren(component, component.element, {})
-    })    
+    })  
+
+}
+
+const _observeProps = (component) => {
+    if(!component.props) return {}
+    const dom = domFactory(component.element)
+
+    component.props.on((props) => { 
+        _injectTemplate(component, component.element, component.parentElement, { props })
+        _bindDomEvents(component)
+        _renderChildren(component, component.element, {})
+    })  
+
 }
 
 
@@ -108,18 +133,23 @@ const _createComponentElement = (selector) => {
     return element
 }
 
+export const _getPropsFrom = (component) => {
+    if(!component || !component.element) return {}
+    if(!component.element.dataset) return {}
+    
+    const jsonDataset = JSON.stringify(component.element.dataset)
+    return JSON.parse(jsonDataset)
+}
+
 export const render = (factory, element, parentElement, options =  {}) => {
     const component = factory(options)  
-    const children = _getChildren(component)
-    const dom = domFactory(element)
-
     component.selector = _createSelector(factory.name)
 
+    _observeState(component)
+    _observeProps(component)
     _execHook(component, 'beforeOnInit')
     _injectTemplate(component, element, parentElement, options)
     _execHook(component, 'afterOnInit')
-    _bindDomEvents(component)
-    _observeState(component)
     _renderChildren(component, parentElement, {})
     _execHook(component, 'afterOnChildrenInit')
 }
