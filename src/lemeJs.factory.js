@@ -1,4 +1,3 @@
-import { getPropsFrom, observableFactory } from "lemejs";
 import { domFactory } from "./dom.factory.js";
 import { html, css } from './tagged.template.js'
 
