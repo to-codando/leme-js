@@ -1,6 +1,6 @@
 {
     "name": "lemejs",
-    "version": "5.1.0",
+    "version": "5.1.1",
     "description": "Reactive Library to SPA.",
     "main": "index.js",
     "scripts": {
@@ -8,7 +8,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/devfreelex/leme-js.git" 
+        "url": "git+https://github.com/to-codando/leme-js.git" 
     },
     "keywords": [
         "leme",
@@ -25,9 +25,9 @@
     "author": "Rodrigo Rocha",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/devfreelex/leme-js/issues"
+        "url": "https://github.com/to-codando/leme-js/issues"
     },
-    "homepage": "https://github.com/devfreelex/leme-js#readme",
+    "homepage": "https://github.com/to-codando/leme-js-doc#readme",
     "dependencies": {}
 }
 
