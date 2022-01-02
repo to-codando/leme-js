@@ -1,4 +1,4 @@
-import { render } from "./lemeJs.factory.js"
+import { render, createSelector } from "./lemeJs.factory.js"
 
 export const routerFactory = () => {
 
@@ -38,9 +38,11 @@ export const routerFactory = () => {
         const route = routes.find( route => route.regExpRoute.test(hash))
         const routeParams = _getRouteParams(route)
         const options = { routeParams }
-
+        
         if(route) {
-            render(route.component, null, routerElement, options)
+            const componentSelector = createSelector(route.component.name)
+            const componentElement = document.createElement(componentSelector)
+            render(route.component, componentElement, routerElement, options)
             return
         } 
 
