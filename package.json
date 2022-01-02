@@ -1,6 +1,6 @@
 {
     "name": "lemejs",
-    "version": "5.1.3",
+    "version": "5.1.4",
     "description": "Reactive Library to SPA.",
     "main": "index.js",
     "scripts": {

@@ -8,7 +8,7 @@ const _getStyles = (component) => {
 }
 
 const _bindStyles = (component) => {
-    const selector = createSelector(component.selector);
+    const selector = _createSelector(component.selector);
     const styles = _getStyles(component);
     const styleExists = document.querySelector(`style#${selector}`)
 
@@ -24,7 +24,7 @@ const _bindStyles = (component) => {
     document.head.append(styleElement);
   };
 
-export const createSelector = (text) => {
+const _createSelector = (text) => {
     return text
       .split(/(?=[A-Z])/)
       .join("-")
@@ -58,7 +58,7 @@ const _execHook = (component, hookName) => {
 const _renderChildren = (component, parentElement, options = {}) => { 
     const children = _getChildren(component)
     children.forEach( child => {
-        const selector = createSelector(child.name)
+        const selector = _createSelector(child.name)
         const elements = Array.from(parentElement.querySelectorAll(selector))
         elements.forEach( element => {
             render(child, element, options)
@@ -91,6 +91,7 @@ const _injectTemplate = (component, element, parentElement, options =  {}) => {
         parentElement.innerHTML = ''
         parentElement.insertAdjacentElement('beforeend', component.element)
         _execHook(component, 'afterOnRender')
+        _bindDomEvents(component)
         return
     }
 
@@ -142,7 +143,7 @@ export const _getPropsFrom = (component) => {
 
 export const render = (factory, element, parentElement, options =  {}) => {
     const component = factory(options)  
-    component.selector = createSelector(factory.name)
+    component.selector = _createSelector(factory.name)
 
     _observeState(component)
     _observeProps(component)
