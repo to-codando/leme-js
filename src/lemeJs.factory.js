@@ -161,7 +161,8 @@ export const lemeJs = (config) => {
 
     const init = () => {
         if(!appMain || typeof appMain !== 'function') throw new Error('The appMain not is an function and must be.')
-        render(appMain, document.querySelector('app-main'))
+        const appMainElement = document.querySelector('app-main')
+        render(appMain, appMainElement, appMainElement)
         if(router) router.init()
     }
 
