@@ -61,7 +61,7 @@ const _renderChildren = (component, parentElement, options = {}) => {
         const selector = _createSelector(child.name)
         const elements = Array.from(parentElement.querySelectorAll(selector))
         elements.forEach( element => {
-            render(child, element, options)
+            render(child, element, parentElement, options)
         })
     })
 
