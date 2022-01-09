@@ -28,6 +28,7 @@ export const routerFactory = () => {
     const _getHash = () => window.location.hash
 
     const _getRouteParams = (route) => {
+        
         const hash = _getHash()
         const hashParts = hash.replace('#/', '').split('/')
         const params = {routeName: hashParts.shift()}
@@ -51,9 +52,9 @@ export const routerFactory = () => {
     const _loadByHash = (hash) => {
 
         const route = routes.find( route => route.regExpRoute.test(hash))
-        const routeParams = _getRouteParams(route)
         
         if(route) {
+            const routeParams = _getRouteParams(route)
             const selector = _createSelector(route.component.name)
             const element = _createComponentElement(selector)
             const options = { routeParams, parentElement: routerElement, element, isRouted: true }
