@@ -1,5 +1,20 @@
 import { render } from "./lemeJs.factory.js"
 
+const _createSelector = (text) => {
+    return text
+        .split(/(?=[A-Z])/)
+        .join("-")
+        .toLowerCase();
+};
+
+const _createComponentElement = (selector) => { 
+    const regexSelector = /^([a-z]+-)+([a-z]+)$/
+    if(!selector || typeof selector !== 'string') throw new Error('component selector is not a string and must be.')
+    if(!regexSelector.test(selector)) throw new Error('component selector has invalid format.')
+    const element = document.createElement(selector)
+    return element
+}  
+
 export const routerFactory = () => {
 
     let routerElement = null
@@ -37,10 +52,12 @@ export const routerFactory = () => {
 
         const route = routes.find( route => route.regExpRoute.test(hash))
         const routeParams = _getRouteParams(route)
-        const options = { routeParams }
         
         if(route) {
-            render(route.component, null, routerElement, options)
+            const selector = _createSelector(route.component.name)
+            const element = _createComponentElement(selector)
+            const options = { routeParams, parentElement: routerElement, element, isRouted: true }
+            render(route.component, element, routerElement, options)
             return
         } 
 

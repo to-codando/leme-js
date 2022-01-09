@@ -55,24 +55,28 @@ const _execHook = (component, hookName) => {
     if(hooks.hasOwnProperty(hookName)) hooks[hookName]()
 }
 
-const _renderChildren = (component, parentElement, options = {}) => { 
+const _renderChildren = (component,  options = {}) => { 
+
     const children = _getChildren(component)
+
     children.forEach( child => {
+
         const selector = _createSelector(child.name)
-        const elements = Array.from(parentElement.querySelectorAll(selector))
+        const elements = Array.from(component.element.querySelectorAll(selector))
+
         elements.forEach( element => {
-            render(child, element, parentElement, options)
+            const options = { routeParams: {}, parentElement: component.element, element, isRouted: false }
+            render(child, element, component.element, options)
         })
     })
 
 }
 
 
-const _injectTemplate = (component, element, parentElement, options =  {}) => {
+const _injectTemplate = (component, element, options =  {}) => {
     const { state, template } = component
     let props = {}
 
-    component.element = element || _createComponentElement(component.selector)
     if(options.props) props = Object.assign({}, component.props.get(), options.props)
     if(!options.props) props = component.props ? Object.assign(component.props.get(), _getPropsFrom(component)) : {}
 
@@ -86,10 +90,11 @@ const _injectTemplate = (component, element, parentElement, options =  {}) => {
     _execHook(component, 'beforeOnRender')
     _bindStyles(component)
 
-    if(!element) { 
-        component.element.innerHTML = template(resources)
-        parentElement.innerHTML = ''
-        parentElement.insertAdjacentElement('beforeend', component.element)
+    if(options && options.isRouted) {
+        component.element = options.element
+        component.element.innerHTML =  template(resources)
+        options.parentElement.innerHTML = ''
+        options.parentElement.insertAdjacentElement('beforeend', component.element)
         _execHook(component, 'afterOnRender')
         _bindDomEvents(component)
         return
@@ -100,26 +105,31 @@ const _injectTemplate = (component, element, parentElement, options =  {}) => {
     _bindDomEvents(component)
 }
 
-const _observeState = (component) => {
+const _observeState = (component) => {   
+    component.state.on(() => { 
 
-    const dom = domFactory(component.element)
+        const options = { element: component.element, isRouted: false, parentElement: component.element.parentElement}
 
-    component.state.on(() => {
         _injectTemplate(component, component.element)
         _bindDomEvents(component)
-        _renderChildren(component, component.element, {})
-    })  
+        _renderChildren(component, component.element, options)
 
+    })  
 }
 
 const _observeProps = (component) => {
     if(!component.props) return {}
+    
     const dom = domFactory(component.element)
-
+    
     component.props.on((props) => { 
+
+        const options = { element: component.element, isRouted: false, parentElement: component.element.parentElement}
+
         _injectTemplate(component, component.element, component.parentElement, { props })
         _bindDomEvents(component)
-        _renderChildren(component, component.element, {})
+        _renderChildren(component, component.element, options)
+
     })  
 
 }
@@ -142,15 +152,19 @@ export const _getPropsFrom = (component) => {
 }
 
 export const render = (factory, element, parentElement, options =  {}) => {
+
+    const selector =  _createSelector(factory.name)
     const component = factory(options)  
-    component.selector = _createSelector(factory.name)
+    
+    component.selector = selector
+    component.element = element
 
     _observeState(component)
     _observeProps(component)
     _execHook(component, 'beforeOnInit')
-    _injectTemplate(component, element, parentElement, options)
+    _injectTemplate(component, element, options)
     _execHook(component, 'afterOnInit')
-    _renderChildren(component, parentElement, {})
+    _renderChildren(component, options)
     _execHook(component, 'afterOnChildrenInit')
 }
 
@@ -161,8 +175,9 @@ export const lemeJs = (config) => {
 
     const init = () => {
         if(!appMain || typeof appMain !== 'function') throw new Error('The appMain not is an function and must be.')
-        const appMainElement = document.querySelector('app-main')
-        render(appMain, appMainElement, appMainElement)
+        const element = document.querySelector('app-main')
+        const options = { isRouted: false, element, parentElment: element.parentElement}
+        render(appMain, element, element.parentElement, options)
         if(router) router.init()
     }
 
