@@ -1,4 +1,7 @@
+import { observableFactory } from "./observable.factory.js";
 import { render } from "./lemeJs.factory.js"
+
+const routerObservable = observableFactory({})
 
 const _createSelector = (text) => {
     return text
@@ -15,7 +18,7 @@ const _createComponentElement = (selector) => {
     return element
 }  
 
-export const routerFactory = () => {
+const routerFactory = () => {
 
     let routerElement = null
     let routes = []
@@ -49,6 +52,8 @@ export const routerFactory = () => {
         console.groupEnd();         
     }
 
+    const _getRouteByHash = (hash) =>  routes.find( route => route.regExpRoute.test(hash))
+
     const _loadByHash = (hash) => {
 
         const route = routes.find( route => route.regExpRoute.test(hash))
@@ -58,6 +63,7 @@ export const routerFactory = () => {
             const selector = _createSelector(route.component.name)
             const element = _createComponentElement(selector)
             const options = { routeParams, parentElement: routerElement, element, isRouted: true }
+            routerObservable.set({ routeParams })
             render(route.component, element, routerElement, options)
             return
         } 
@@ -105,6 +111,6 @@ export const routerFactory = () => {
         init,
         set
     }
-
-
 }
+
+export { routerObservable, routerFactory }

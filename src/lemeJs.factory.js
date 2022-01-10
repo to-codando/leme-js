@@ -55,7 +55,7 @@ const _execHook = (component, hookName) => {
     if(hooks.hasOwnProperty(hookName)) hooks[hookName]()
 }
 
-const _renderChildren = (component,  options = {}) => { 
+const _renderChildren = (component,  options ) => { 
     const children = _getChildren(component)
 
     children.forEach( child => {
@@ -106,12 +106,11 @@ const _injectTemplate = (component, element, options =  {}) => {
 
 const _observeState = (component, options) => {   
     component.state.on(() => { 
+        const componentOptions = {routeParams:() => options.routeParams, element: component.element, isRouted: false, parentElement: component.element.parentElement}
 
-        const componentOptions = {...options, element: component.element, isRouted: false, parentElement: component.element.parentElement}
-
-        _injectTemplate(component, component.element)
+        _injectTemplate(component, component.element,  component.parentElement, {props: component.hasOwnProperty('props') ? component.props.get() : {}} )
         _bindDomEvents(component)
-        _renderChildren(component, componentOptions)
+        _renderChildren(component, {...componentOptions })
 
     })  
 }
@@ -120,14 +119,13 @@ const _observeProps = (component, options) => {
     if(!component.props) return {}
     
     const dom = domFactory(component.element)
-    
-    component.props.on((props) => { 
 
+    component.props.on((props) => { 
         const componentOptions = { ...options, element: component.element, isRouted: false, parentElement: component.element.parentElement}
 
         _injectTemplate(component, component.element, component.parentElement, { props })
         _bindDomEvents(component)
-        _renderChildren(component, componentOptions)
+        _renderChildren(component, {...componentOptions })
 
     })  
 
@@ -151,6 +149,7 @@ export const _getPropsFrom = (component) => {
 }
 
 export const render = (factory, element, parentElement, options =  {}) => {
+    
     const selector =  _createSelector(factory.name)
     const component = factory(options)  
     
@@ -174,7 +173,7 @@ export const lemeJs = (config) => {
     const init = () => {
         if(!appMain || typeof appMain !== 'function') throw new Error('The appMain not is an function and must be.')
         const element = document.querySelector('app-main')
-        const options = { isRouted: false, element, parentElment: element.parentElement}
+        const options = { isRouted: false, element, parentElement: element.parentElement, routeParams: {}}
         render(appMain, element, element.parentElement, options)
         if(router) router.init()
     }
