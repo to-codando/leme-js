@@ -151,7 +151,6 @@ export const _getPropsFrom = (component) => {
 }
 
 export const render = (factory, element, parentElement, options =  {}) => {
-    console.log(options)
     const selector =  _createSelector(factory.name)
     const component = factory(options)  
     
