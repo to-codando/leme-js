@@ -93,7 +93,7 @@ export const routerFactory = () => {
 
     const add = (regExpRoute, component, paramNames) => {
         routes = [...routes, { regExpRoute, component, paramNames}]
-}    
+    }    
 
     const set = (route) => {
         Object.assign(hashConfig, route)

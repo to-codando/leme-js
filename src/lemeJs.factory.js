@@ -56,7 +56,6 @@ const _execHook = (component, hookName) => {
 }
 
 const _renderChildren = (component,  options = {}) => { 
-
     const children = _getChildren(component)
 
     children.forEach( child => {
@@ -65,8 +64,8 @@ const _renderChildren = (component,  options = {}) => {
         const elements = Array.from(component.element.querySelectorAll(selector))
 
         elements.forEach( element => {
-            const options = { routeParams: {}, parentElement: component.element, element, isRouted: false }
-            render(child, element, component.element, options)
+            const componentOptions = { ...options, parentElement: component.element, element, isRouted: false }
+            render(child, element, component.element, componentOptions)
         })
     })
 
