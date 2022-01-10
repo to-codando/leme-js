@@ -104,30 +104,30 @@ const _injectTemplate = (component, element, options =  {}) => {
     _bindDomEvents(component)
 }
 
-const _observeState = (component) => {   
+const _observeState = (component, options) => {   
     component.state.on(() => { 
 
-        const options = { element: component.element, isRouted: false, parentElement: component.element.parentElement}
+        const componentOptions = {...options, element: component.element, isRouted: false, parentElement: component.element.parentElement}
 
         _injectTemplate(component, component.element)
         _bindDomEvents(component)
-        _renderChildren(component, component.element, options)
+        _renderChildren(component, componentOptions)
 
     })  
 }
 
-const _observeProps = (component) => {
+const _observeProps = (component, options) => {
     if(!component.props) return {}
     
     const dom = domFactory(component.element)
     
     component.props.on((props) => { 
 
-        const options = { element: component.element, isRouted: false, parentElement: component.element.parentElement}
+        const componentOptions = { ...options, element: component.element, isRouted: false, parentElement: component.element.parentElement}
 
         _injectTemplate(component, component.element, component.parentElement, { props })
         _bindDomEvents(component)
-        _renderChildren(component, component.element, options)
+        _renderChildren(component, componentOptions)
 
     })  
 
@@ -151,15 +151,15 @@ export const _getPropsFrom = (component) => {
 }
 
 export const render = (factory, element, parentElement, options =  {}) => {
-
+    console.log(options)
     const selector =  _createSelector(factory.name)
     const component = factory(options)  
     
     component.selector = selector
     component.element = element
 
-    _observeState(component)
-    _observeProps(component)
+    _observeState(component, options)
+    _observeProps(component, options)
     _execHook(component, 'beforeOnInit')
     _injectTemplate(component, element, options)
     _execHook(component, 'afterOnInit')
