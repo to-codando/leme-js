@@ -34,7 +34,9 @@ const _createSelector = (text) => {
 const _getMethods = (component) => {
     const props = component.props ? component.props : {}
     if(!component.methods) return {}
-    return component.methods({props})
+	const methods = component.methods({ props })
+	const publicMethods = { ...methods }
+    return component.methods({props, publicMethods })
 }
 
 const _getChildren = (component) => {
