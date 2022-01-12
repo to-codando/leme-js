@@ -44,13 +44,13 @@ const _getChildren = (component) => {
 const _bindDomEvents = (component = {}, props = {}) => {
     const dom = domFactory(component.element)
     const methods = _getMethods(component)
-    const events = component.events ? component.events({...dom, methods }) : {}
+    const events = component.events ? component.events({...dom, methods, props }) : {}
     Object.keys(events).forEach( eventName => events[eventName]())
 }
 
 const _execHook = (component, hookName) => {
     const methods = _getMethods(component)
-    const props = component.props || {}
+    const props = _getPropsFrom(component)
     const hooks = component.hooks ? component.hooks({methods, props }) : {}
     if(hooks.hasOwnProperty(hookName)) hooks[hookName]()
 }
@@ -73,11 +73,9 @@ const _renderChildren = (component,  options ) => {
 
 
 const _injectTemplate = (component, element, options =  {}) => {
-    const { state, template } = component
-    let props = {}
 
-    if(options.props) props = Object.assign({}, component.props.get(), options.props)
-    if(!options.props) props = component.props ? Object.assign(component.props.get(), _getPropsFrom(component)) : {}
+    const { state, template } = component
+    const props = _getPropsFrom(component.element)
 
     const resources = { 
         state: state.get(), 
@@ -95,42 +93,26 @@ const _injectTemplate = (component, element, options =  {}) => {
         options.parentElement.innerHTML = ''
         options.parentElement.insertAdjacentElement('beforeend', component.element)
         _execHook(component, 'afterOnRender')
-        _bindDomEvents(component)
+        _bindDomEvents(component, props)
         return
     }
 
     element.innerHTML = template(resources)
     _execHook(component, 'afterOnRender')
-    _bindDomEvents(component)
+    _bindDomEvents(component, props)
 }
 
 const _observeState = (component, options) => {   
+
     component.state.on(() => { 
         const componentOptions = {routeParams:() => options.routeParams, element: component.element, isRouted: false, parentElement: component.element.parentElement}
+		const props =  _getPropsFrom(component.element)
 
-        _injectTemplate(component, component.element,  component.parentElement, {props: component.hasOwnProperty('props') ? component.props.get() : {}} )
-        _bindDomEvents(component)
+        _injectTemplate(component, component.element,  component.parentElement, { props})
+        _bindDomEvents(component, props)
         _renderChildren(component, {...componentOptions })
-
     })  
 }
-
-const _observeProps = (component, options) => {
-    if(!component.props) return {}
-    
-    const dom = domFactory(component.element)
-
-    component.props.on((props) => { 
-        const componentOptions = { ...options, element: component.element, isRouted: false, parentElement: component.element.parentElement}
-
-        _injectTemplate(component, component.element, component.parentElement, { props })
-        _bindDomEvents(component)
-        _renderChildren(component, {...componentOptions })
-
-    })  
-
-}
-
 
 const _createComponentElement = (selector) => { 
     const regexSelector = /^([a-z]+-)+([a-z]+)$/
@@ -157,7 +139,6 @@ export const render = (factory, element, parentElement, options =  {}) => {
     component.element = element
 
     _observeState(component, options)
-    _observeProps(component, options)
     _execHook(component, 'beforeOnInit')
     _injectTemplate(component, element, options)
     _execHook(component, 'afterOnInit')
