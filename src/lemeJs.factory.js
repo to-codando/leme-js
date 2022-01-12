@@ -75,7 +75,7 @@ const _renderChildren = (component,  options ) => {
 const _injectTemplate = (component, element, options =  {}) => {
 
     const { state, template } = component
-    const props = _getPropsFrom(component.element)
+    const props = _getPropsFrom(component)
 
     const resources = { 
         state: state.get(), 
@@ -106,7 +106,7 @@ const _observeState = (component, options) => {
 
     component.state.on(() => { 
         const componentOptions = {routeParams:() => options.routeParams, element: component.element, isRouted: false, parentElement: component.element.parentElement}
-		const props =  _getPropsFrom(component.element)
+		const props =  _getPropsFrom(component)
 
         _injectTemplate(component, component.element,  component.parentElement, { props})
         _bindDomEvents(component, props)
