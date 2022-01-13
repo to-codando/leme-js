@@ -2,100 +2,108 @@ import { pubsubFactory } from './pubsub.factory.js';
 
 const storeFactory = ({ state, mutations }) => {
 
-  const _eventEmitter = pubsubFactory()
+	const _eventEmitter = pubsubFactory()
 
-  let _stateHistory = [JSON.parse(JSON.stringify(state))]
-  let _activeHistoryStateIndex = 0;
-  const _state = JSON.parse(JSON.stringify(state))
-  const _mutations = mutations
+	let _stateHistory = [JSON.parse(JSON.stringify(state))]
+	let _activeHistoryStateIndex = 0;
+	const _state = JSON.parse(JSON.stringify(state))
+	const _mutations = mutations
 
-  const _getLastIndexHistoryState = () => {
-    return _stateHistory.length - 1
-  }
+	const _getLastIndexHistoryState = () => {
+		return _stateHistory.length - 1
+	}
 
-  const _getActiveState = (index) => _stateHistory[index]
+	const _getActiveState = (index) => _stateHistory[index]
 
-  const _setActiveHistoryIndex = (index) => {
-    if (!index) {
-      _activeHistoryStateIndex = _stateHistory.length
-      return
-    } 
+	const _setActiveHistoryIndex = (index) => {
+		if (!index) {
+			_activeHistoryStateIndex = _stateHistory.length
+			return
+		}
 
-    _activeHistoryStateIndex = index
-  }
+		_activeHistoryStateIndex = index
+	}
 
-  const _setStateHistory = (newState) => {
-    _stateHistory = [..._stateHistory, newState]
-  }
+	const _setStateHistory = (newState) => {
+		_stateHistory = [..._stateHistory, newState]
+	}
 
-  const _setState = (eventName, payload) => {
-    const newState = JSON.parse(JSON.stringify(_mutations[eventName](_state, payload)))
-    Object.assign(_state, newState)
-    _setActiveHistoryIndex()
-    _setStateHistory(newState)
-    return newState
-  }
+	const _setState = (eventName, payload) => {
+		const newState = JSON.parse(JSON.stringify(_mutations[eventName](_state, payload)))
+		Object.assign(_state, newState)
+		_setActiveHistoryIndex()
+		_setStateHistory(newState)
+		return newState
+	}
 
-  const _setActiveState = (newActiveState) => {
-    const deepState = JSON.parse(JSON.stringify(newActiveState))
-    Object.assign(_state, deepState)
-  }
+	const _setActiveState = (newActiveState) => {
+		const deepState = JSON.parse(JSON.stringify(newActiveState))
+		Object.assign(_state, deepState)
+	}
 
-  const _logState = () => {
-    console.group()
-      console.log('..................STORE.........................')
-      console.log(` History index: ${_activeHistoryStateIndex}`)
-      console.log(` Current State: ${JSON.stringify(_state)}`)
-      console.log('................................................')
-    console.groupEnd()
-  }
+	const _logState = () => {
+		console.group()
+		console.log('..................STORE.........................')
+		console.log(` History index: ${_activeHistoryStateIndex}`)
+		console.log(` Current State: ${JSON.stringify(_state)}`)
+		console.log('................................................')
+		console.groupEnd()
+	}
 
-  const on = (eventName, callback) => {
-    const result = _eventEmitter.on(eventName, callback)
-    _eventEmitter.on('on:updated:store', callback)
-    return result
-  }
+	const off = (handler) => {
+		const event = {
+			eventName: 'on:updated:store',
+			handler
+		}
+		_eventEmitter.off(event)
+	}
 
-  const onUpdated = (callback) => {
-    _eventEmitter.on('on:updated:store', (data) => {
-      callback(data)
-    })
-  }
+	const on = (eventName, callback) => {
+		const result = _eventEmitter.on(eventName, callback)
+		_eventEmitter.on('on:updated:store', callback)
+		return result
+	}
 
-  const emit = (eventName, payload) => {
-    const newState = _setState(eventName, payload)
-    // _eventEmitter.emit('on:updated:store', newState)
-    _eventEmitter.emit(eventName, newState)
-  }
+	const onUpdated = (callback) => {
+		_eventEmitter.on('on:updated:store', (data) => {
+			callback(data)
+		})
+	}
 
-  const prev = () => {  
-    if (_activeHistoryStateIndex > 0) {
-      _activeHistoryStateIndex = _activeHistoryStateIndex - 1
-      const newActiveState =_getActiveState(_activeHistoryStateIndex)
-      _setActiveState(newActiveState)
-      _eventEmitter.emit('on:updated:store', newActiveState)
-    }
+	const emit = (eventName, payload) => {
+		const newState = _setState(eventName, payload)
+		_eventEmitter.emit('on:updated:store', newState)
+		// _eventEmitter.emit(eventName, newState)
+	}
 
-  }
+	const prev = () => {
+		if (_activeHistoryStateIndex > 0) {
+			_activeHistoryStateIndex = _activeHistoryStateIndex - 1
+			const newActiveState = _getActiveState(_activeHistoryStateIndex)
+			_setActiveState(newActiveState)
+			_eventEmitter.emit('on:updated:store', newActiveState)
+		}
 
-  const next = () => {
-    if (_activeHistoryStateIndex < _getLastIndexHistoryState()) {
-      _activeHistoryStateIndex = _activeHistoryStateIndex + 1
-      const newActiveState = _getActiveState(_activeHistoryStateIndex)
-      _setActiveState(newActiveState)
-      _eventEmitter.emit('on:updated:store', newActiveState)
-    }
-  }
+	}
+
+	const next = () => {
+		if (_activeHistoryStateIndex < _getLastIndexHistoryState()) {
+			_activeHistoryStateIndex = _activeHistoryStateIndex + 1
+			const newActiveState = _getActiveState(_activeHistoryStateIndex)
+			_setActiveState(newActiveState)
+			_eventEmitter.emit('on:updated:store', newActiveState)
+		}
+	}
 
 
-  const getState = (index = 0) => {
-    if (index >= 1) return _stateHistory[index]
-    return _stateHistory[_activeHistoryStateIndex]
-  }
+	const getState = (index = 0) => {
+		if (index >= 1) return _stateHistory[index]
+		return _stateHistory[_activeHistoryStateIndex]
+	}
 
-  const startNavigator = () => {
+	const startNavigator = () => {
 
-    const template = `
+		const template = `
       <store-navigator>
         <div id="controllers">
           <button id="prev">prev</button>
@@ -131,24 +139,24 @@ const storeFactory = ({ state, mutations }) => {
         </style>
       </store-navigator>
     `
-    const storeNavigator = document.querySelector('store-navigator')
-    document.body.insertAdjacentHTML('beforeend', template)
+		const storeNavigator = document.querySelector('store-navigator')
+		document.body.insertAdjacentHTML('beforeend', template)
 
-    const prevButton = document.querySelector('#prev')
-    const nextButton = document.querySelector('#next')
+		const prevButton = document.querySelector('#prev')
+		const nextButton = document.querySelector('#next')
 
-    prevButton.onclick = () => {
-      prev()
-      _logState()
-    }
-    nextButton.onclick = () => {
-      next()
-      _logState()
-    }
-  }
+		prevButton.onclick = () => {
+			prev()
+			_logState()
+		}
+		nextButton.onclick = () => {
+			next()
+			_logState()
+		}
+	}
 
 
-  return { on, emit, onUpdated, prev, next, getState, startNavigator }
+	return { on, off, emit, onUpdated, prev, next, getState, startNavigator }
 }
 
 export { storeFactory }

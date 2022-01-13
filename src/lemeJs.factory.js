@@ -50,11 +50,14 @@ const _bindDomEvents = (component = {}, props = {}) => {
     Object.keys(events).forEach( eventName => events[eventName]())
 }
 
-const _execHook = (component, hookName) => {
+const _execHook = (component, hookName, stateWatcher = null) => {
     const methods = _getMethods(component)
     const props = _getPropsFrom(component)
     const hooks = component.hooks ? component.hooks({methods, props }) : {}
-    if(hooks.hasOwnProperty(hookName)) hooks[hookName]()
+	const offStateChanges = () => { 
+		component.state.off(stateWatcher[component.selector])
+	}
+    if(hooks.hasOwnProperty(hookName)) hooks[hookName](offStateChanges)
 }
 
 const _renderChildren = (component,  options ) => { 
@@ -75,7 +78,7 @@ const _renderChildren = (component,  options ) => {
 
 
 const _injectTemplate = (component, element, options =  {}) => {
-
+	
     const { state, template } = component
     const props = _getPropsFrom(component)
 
@@ -105,15 +108,20 @@ const _injectTemplate = (component, element, options =  {}) => {
 }
 
 const _observeState = (component, options) => {   
-
-    component.state.on(() => { 
-        const componentOptions = {routeParams:() => options.routeParams, element: component.element, isRouted: false, parentElement: component.element.parentElement}
-		const props =  _getPropsFrom(component)
-
-        _injectTemplate(component, component.element,  component.parentElement, { props})
-        _bindDomEvents(component, props)
-        _renderChildren(component, {...componentOptions })
-    })  
+	const { selector } = component
+	const stateWatcher = {
+		[selector]: () => { 
+			const componentOptions = {routeParams:() => options.routeParams, element: component.element, isRouted: false, parentElement: component.element.parentElement}
+			const props =  _getPropsFrom(component)
+			
+			_injectTemplate(component, component.element,  component.parentElement, { props})
+			_bindDomEvents(component, props)
+			_renderChildren(component, {...componentOptions })
+			_execHook(component, 'onDestroy', stateWatcher)
+		}
+	}
+	
+	component.stateWatcher =  component.state.on(stateWatcher[selector])  
 }
 
 const _createComponentElement = (selector) => { 
@@ -141,6 +149,7 @@ export const render = (factory, element, parentElement, options =  {}) => {
     component.element = element
 
     _observeState(component, options)
+    _execHook(component, 'onDestroy', component.stateWatcher)
     _execHook(component, 'beforeOnInit')
     _injectTemplate(component, element, options)
     _execHook(component, 'afterOnInit')
