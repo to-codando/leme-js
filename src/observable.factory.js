@@ -4,8 +4,10 @@ export const observableFactory = (value) => {
 	let _value = value
 
 	const _handlerExists = (handler) => {
-		return _handlers.some( subscribedHandler => {
-			return subscribedHandler.toString() === handler.toString()
+		return _handlers.some(subscribedHandler => {
+			return subscribedHandler.toString() === handler.toString() &&
+				subscribedHandler.name === handler.name &&
+				subscribedHandler === handler
 		})
 	}
 
