@@ -9,9 +9,8 @@ export {
   pubsubFactory,
   routerFactory,
   routerParamsFactory,
-  routerObservable,
   observerFactory,
   storeFactory,
   domFactory,
   createApp,
-};
+}
