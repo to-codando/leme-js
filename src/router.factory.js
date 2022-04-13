@@ -1,116 +1,110 @@
-import { observableFactory } from "./observable.factory.js";
-import { render } from "./lemeJs.factory.js"
+import { observerFactory } from "./observer.factory"
 
-const routerObservable = observableFactory({})
+export const routerParamsFactory = () => {
+    const hash = window.location.hash.replace('#/', '')
+    const params = hash.split('/')
 
-const _createSelector = (text) => {
-    return text
-        .split(/(?=[A-Z])/)
-        .join("-")
-        .toLowerCase();
-};
+    const getFirst = () => {
+        const firstPosition = 0
+        return params[firstPosition] || null
+    }
 
-const _createComponentElement = (selector) => { 
-    const regexSelector = /^([a-z]+-)+([a-z]+)$/
-    if(!selector || typeof selector !== 'string') throw new Error('component selector is not a string and must be.')
-    if(!regexSelector.test(selector)) throw new Error('component selector has invalid format.')
-    const element = document.createElement(selector)
-    return element
-}  
+    const getLast = () => {
+        const lastPosition = params.length - 1
+        return params[lastPosition]
+    }
 
-const routerFactory = () => {
+    const getPosition = (positonNumber = 1) => {
 
-    let routerElement = null
-    let routes = []
-    const hashConfig = {initial:'', default:''}
+        return positonNumber >= 1
+            ? params[positonNumber - 1]
+            : params[positonNumber]
+    }
+
+    const getAll = () => [ ...params ]
+
+    return {
+        getAll,
+        getFirst,
+        getLast,
+        getPosition
+    }
+}
+
+export const routerFactory = () => {
+
+    let _routes = []
+    let _render = () => {}
+    let _createComponent = () => {}
+    let _bindHook = () => {}
+    let _routerElement = null
+
+    const _getInitialRoute = () => {
+        return _routes.find( route => route.isInitial)
+    }
+    const _getRouteByHash = () => {
+        const hash = window.location.hash
+        const route = _routes.find( route => route.validator.test(hash))
+        return route ? route : _routes.find( route => route.isDefault) 
+    }
+
+    const _create = (factory) => {
+        _clearRouterElement()
+        const component = _createComponent  (factory, null, _routerElement)
+        const state = component?.state?.get() || {}
+        _bindHook("beforeOnInit", component)
+        _render(component, _routerElement, {state})
+        _bindHook("afterOnInit", component)
+    }
 
     const _redirectTo = (hash) => {
         window.location.hash = hash
     }
 
-    const _getHash = () => window.location.hash
-
-    const _getRouteParams = (route) => {
-        
-        const hash = _getHash()
-        const hashParts = hash.replace('#/', '').split('/')
-        const params = {routeName: hashParts.shift()}
-
-        if(!hashParts || !hashParts.length) return {}
-
-        route.paramNames.forEach( (param, index)=> {
-            const paramKey = {[param]: hashParts[index]}
-            Object.assign(params, paramKey)
-        })
-
-        return params
-    }
-
-    const _showException = (title, message) => {
-        console.group(title)
-            console.error(message)
-        console.groupEnd();         
-    }
-
-    const _getRouteByHash = (hash) =>  routes.find( route => route.regExpRoute.test(hash))
-
-    const _loadByHash = (hash) => {
-
-        const route = routes.find( route => route.regExpRoute.test(hash))
-        
-        if(route) {
-            const routeParams = _getRouteParams(route)
-            const selector = _createSelector(route.component.name)
-            const element = _createComponentElement(selector)
-            const options = { routeParams, parentElement: routerElement, element, isRouted: true }
-            routerObservable.set({ routeParams })
-            render(route.component, element, routerElement, options)
-            return
-        } 
-
-        _redirectTo(hashConfig.default)
-        _showException('Route Error: ', `An attempt to access route ${hash} failed because the route is not declared and must be.`)
-    }
-
-    const _onHashChange = () => {
-        window.onhashchange = () => {
-            const hash = _getHash()
-            _loadByHash(hash)
-        }
-    }
+    const _clearRouterElement = () => 
+        _routerElement.innerHTML = ''
 
     const _onDomLoaded = () => {
+        const route = _getInitialRoute()
         window.addEventListener('DOMContentLoaded', () => {
-            const hash = _getHash()
-            if(hash) return _loadByHash(hash)
-            _redirectTo(hashConfig.initial)
+            if(window.location.hash) return _create(route.component)
+            _redirectTo(route.hash)
         })
-    }
-
-    const init = () => {
-        routerElement = document.querySelector('router-view')
-        _onDomLoaded()
-        _onHashChange()
-    }
-
-    const load = (hash) => {
-        _redirectTo(hash)
-    }
-
-    const add = (regExpRoute, component, paramNames) => {
-        routes = [...routes, { regExpRoute, component, paramNames}]
     }    
 
-    const set = (route) => {
-        Object.assign(hashConfig, route)
+    const _onHashChange = () => {
+        window.addEventListener('hashchange', () => {
+            const route = _getRouteByHash()
+            _create(route.component)
+        })        
+    }    
+
+    const add = (route) => {
+        _routes = [..._routes, route]
+    }
+
+    const setRender = (render) => _render = render
+
+    const setElement = (appElement) => {
+        _routerElement = appElement.querySelector('router-view')
+    }
+
+    const setHooksDispatcher = (dispatcher) => _bindHook = dispatcher
+
+    const setComponentCreator = (creator) => _createComponent    = creator
+
+    const init = () => {
+        _onHashChange()
+        _onDomLoaded()
     }
 
     return {
-        add,
-        load,
         init,
-        set
+        setRender,
+        setElement,
+        setComponentCreator,
+        setHooksDispatcher,
+        add
     }
-}
 
-export { routerObservable, routerFactory }
+}

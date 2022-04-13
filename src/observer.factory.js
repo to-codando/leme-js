@@ -1,4 +1,4 @@
-export const observableFactory = (value) => {
+export const observerFactory = (value) => {
 
 	let _handlers = []
 	let _value = value
@@ -13,8 +13,8 @@ export const observableFactory = (value) => {
 
 	const on = (handler) => {
 
-		if ((typeof handler) !== 'function') {
-			throw new Error('Handler is not a function and must be.')
+		if ((typeof handler) !== "function") {
+			throw new Error("Handler is not a function and must be.")
 		}
 
 		if(_handlerExists(handler)) return handler
