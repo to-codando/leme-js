@@ -35,8 +35,9 @@ export const routerFactory = () => {
 
     let _routes = []
     let _render = () => {}
-    let _createComponent = () => {}
+    let _createComponents = () => {}
     let _bindHook = () => {}
+    let _queryRefs = () => {}
     let _routerElement = null
 
     const _getInitialRoute = () => {
@@ -48,12 +49,22 @@ export const routerFactory = () => {
         return route ? route : _routes.find( route => route.isDefault) 
     }
 
+    const _getRef = (factory) => {
+        const selector = _createSelector(factory.name)
+        const tagHTML = `<${selector}> </${selector}>`
+        _routerElement.innerHTML = tagHTML
+        return _routerElement.firstChild
+    }
+
+    const _createSelector = (text) => 
+        text.split(/(?=[A-Z])/).join("-").toLowerCase()
+
     const _create = (factory) => {
-        _clearRouterElement()
-        const component = _createComponent  (factory, null, _routerElement)
-        const state = component?.state?.get() || {}
+        const refElements = [_getRef(factory)]
+        const component = _createComponents(factory, refElements, {}).pop()
+    
         _bindHook("beforeOnInit", component)
-        _render(component, _routerElement, {state})
+        _render(component, refElements, {})
         _bindHook("afterOnInit", component)
     }
 
@@ -65,10 +76,19 @@ export const routerFactory = () => {
         _routerElement.innerHTML = ''
 
     const _onDomLoaded = () => {
-        const route = _getInitialRoute()
+        
+
         window.addEventListener('DOMContentLoaded', () => {
-            if(window.location.hash) return _create(route.component)
+            const hash = window.location.hash
+
+            if(hash) {
+                const route = _getRouteByHash(hash)
+                return _create(route.component)
+            }
+
+            const route = _getInitialRoute()
             _redirectTo(route.hash)
+            _create(route.component)
         })
     }    
 
@@ -91,7 +111,9 @@ export const routerFactory = () => {
 
     const setHooksDispatcher = (dispatcher) => _bindHook = dispatcher
 
-    const setComponentCreator = (creator) => _createComponent    = creator
+    const setComponentCreator = (creator) => _createComponents = creator
+
+    const setQueryRefs = (query) => _queryRefs = query
 
     const init = () => {
         _onHashChange()
@@ -104,6 +126,7 @@ export const routerFactory = () => {
         setElement,
         setComponentCreator,
         setHooksDispatcher,
+        setQueryRefs,
         add
     }
 

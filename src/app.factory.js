@@ -1,7 +1,7 @@
 import { uuid } from "./uuid"
 import { domFactory } from "./dom.factory"
 
-export const createApp = (selector, factories, router = null) => {
+export const createApp = (selector, mainFactory, router = null) => {
   const appElement = document.querySelector(selector)
 
   const hasState = (component) => 
@@ -16,21 +16,30 @@ export const createApp = (selector, factories, router = null) => {
     })
   }
 
-  const createComponent = (factory, element = null, parentElement, options = {}) => {
+  const createComponents = (factory, refElements = [], options = {}) => {
     const selector = createSelector(factory.name)
-    const componentElement = element ? element : createElement(selector)
-    const props = componentElement.dataset
-    const contextId = uuid(selector)
-    const component = factory({ props, ...options })
-    
-    component.element = componentElement
-    component.parentElement = parentElement
-    component.selector = selector
-    component.props = props
-    component.contextId = contextId
-    watchState(component)
 
-    return component
+    return refElements.map( refElement => {
+      const componentElement = createElement(selector)
+      const props = refElement.dataset
+      const contextId = uuid(selector)
+      const component = factory({ props, ...options })
+
+      for(let key in props) { 
+        componentElement.setAttribute(`data-${key}`, props[key]) 
+      }
+
+      component.element = componentElement
+      component.refElement = refElement
+      component.parentElement = refElement.parentElement
+      component.selector = selector
+      component.props = props
+      component.contextId = contextId      
+      watchState(component)
+
+      return component
+    })
+
   }
 
   const createSelector = (text) => 
@@ -62,8 +71,8 @@ export const createApp = (selector, factories, router = null) => {
     executeHook(hookName, hooks, dom)
   }
 
-  const _getRefs = (parentComponent, childrenSelector) => {
-    const refElements = parentComponent.element.querySelectorAll(childrenSelector)
+  const _getRefs = (containerElement, childrenSelector) => {
+    const refElements = containerElement.querySelectorAll(childrenSelector)
     return Array.from(refElements)
   }
 
@@ -75,51 +84,65 @@ export const createApp = (selector, factories, router = null) => {
 
     for (let key in childrenFactories) {
 
+      const childFactory = childrenFactories[key]
       const selector = createSelector(key)
-      const refElements = _getRefs(parentComponent, selector)
-      const components = refElements.map( refElement => {
-        return createComponent(childrenFactories[key], refElement, refElement.parentElement)
-      })
+      const refElements = _getRefs(parentComponent.element, selector)
+      const components = createComponents(childFactory, refElements)
 
       components.forEach( component => {
-        const state = component?.state?.get() || {}
         bindHook("beforeOnInit", component)
-        render(component, component.parentElement, state)
+        render(component, component.parentElement, {})
         bindHook("afterOnInit", component)
       })
       
     }
   }
 
-  const render = (component, parentElement = null, payload = {}) => {
-    const { template, contextId, props } = component
-    bindHook("beforeOnRender", component)
-    component.element.innerHTML = applyContext(template({ ...payload, props }), contextId)
+  const render = (component, payload = {}) => {
 
-    parentElement 
-    ? parentElement.append(component.element)
-    : appElement.append(component.element)
-    
+    const state = component?.state?.get() || {}
+    const { template, contextId, props } = component
+
+    bindHook("beforeOnRender", component)
+
+    component.element.innerHTML = applyContext(template({ state, props, ...payload,}), contextId)
+    component.refElement.replaceWith(component.element)
+
     bindStyles(component)
     bindHook("afterOnRender", component)
     renderChildren(component)
+
+    // const { template, contextId, props } = component
+    // bindHook("beforeOnRender", component)
+    // component.element.innerHTML = applyContext(template({ ...payload, props }), contextId)
+
+    // parentElement 
+    // ? parentElement.append(component.element)
+    // : appElement.append(component.element)
+    
+    // bindStyles(component)
+    // bindHook("afterOnRender", component)
+    // renderChildren(component)
   }
 
   const init = () => {
-    for (let key in factories) {
-      const component = createComponent(factories[key], null, appElement)
-      const state = component?.state?.get() || {}
-      bindHook("beforeOnInit", component)
-      render(component, null, {state})
-      bindHook("afterOnInit", component)
-    }
-    if(router) {
-      router.setRender(render)
-      router.setElement(appElement)
-      router.setComponentCreator(createComponent)
-      router.setHooksDispatcher(bindHook)
-      router.init()
-    }
+    const payload = {}
+    const componentSelector = createSelector(mainFactory.name)
+    const appElement = document.querySelector(selector)
+    const refElements = _getRefs(appElement, componentSelector)
+    const components = createComponents(mainFactory, refElements, payload)
+
+    render(components[0], payload)
+
+    if(!router) return
+
+    router.setRender(render)
+    router.setElement(appElement)
+    router.setComponentCreator(createComponents)
+    router.setHooksDispatcher(bindHook)
+    router.setQueryRefs(_getRefs)
+    router.init()
+
   }
 
   return { init }
