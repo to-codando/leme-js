@@ -1,3 +1,4 @@
+import { html, css } from './tagged.template'
 import { uuid } from "./uuid"
 import { domFactory } from "./dom.factory"
 
@@ -104,7 +105,7 @@ export const createApp = (selector, mainFactory, router = null) => {
 
     bindHook("beforeOnRender", component)
 
-    component.element.innerHTML = applyContext(template({ state, props, ...payload,}), contextId)
+    component.element.innerHTML = applyContext(template({ state, props, html, css, ...payload}), contextId)
     component.refElement.replaceWith(component.element)
 
     bindStyles(component)
