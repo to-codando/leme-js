@@ -1,5 +1,3 @@
-import { observerFactory } from "./observer.factory"
-
 export const routerParamsFactory = () => {
     const hash = window.location.hash.replace('#/', '')
     const params = hash.split('/')

@@ -99,7 +99,6 @@ export const createApp = (selector, mainFactory, router = null) => {
   }
 
   const render = (component, payload = {}) => {
-
     const state = component?.state?.get() || {}
     const { template, contextId, props } = component
 
@@ -111,18 +110,6 @@ export const createApp = (selector, mainFactory, router = null) => {
     bindStyles(component)
     bindHook("afterOnRender", component)
     renderChildren(component)
-
-    // const { template, contextId, props } = component
-    // bindHook("beforeOnRender", component)
-    // component.element.innerHTML = applyContext(template({ ...payload, props }), contextId)
-
-    // parentElement 
-    // ? parentElement.append(component.element)
-    // : appElement.append(component.element)
-    
-    // bindStyles(component)
-    // bindHook("afterOnRender", component)
-    // renderChildren(component)
   }
 
   const init = () => {
