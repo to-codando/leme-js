@@ -92,21 +92,34 @@ export const createApp = (selector, mainFactory, router = null) => {
 
       components.forEach( component => {
         bindHook("beforeOnInit", component)
-        render(component, component.parentElement, {})
+        render(component)
         bindHook("afterOnInit", component)
       })
       
     }
   }
 
-  const bindSlotElements = (component) => {
-    const inputSlotElements  = Array.from(component.refElement.querySelectorAll('slot'))
+  const bindSingleSlot = (component) => {
+    const slotElement = component.element.querySelector('slot')
+    if(!slotElement || !slotElement.outerHTML) return
+    const childrenElements = component.refElement.innerHTML
+    slotElement.outerHTML = childrenElements
+  }
 
+  const bindMultipleSlots = (component, inputSlotElements) => {
     inputSlotElements.forEach( inputElement => {
-      const outputId = inputElement.id
+      const outputId = inputElement.getAttribute('slot-id')
       const outputElement = component.element.querySelector(`[slot-id="${outputId}"]`)
+      if(!outputElement || !outputElement.outerHTML) return
       outputElement.outerHTML = inputElement.innerHTML
     })
+  }
+
+  const bindSlots = (component) => {
+    const inputSlotElements  = Array.from(component.refElement.querySelectorAll('[slot-id]'))
+    if(inputSlotElements && inputSlotElements.length) 
+      return bindMultipleSlots(component, inputSlotElements)
+    bindSingleSlot(component)
   }
 
   const render = (component, payload = {}) => {
@@ -120,7 +133,7 @@ export const createApp = (selector, mainFactory, router = null) => {
       contextId
     )
 
-    bindSlotElements(component)
+    bindSlots(component)
     component.refElement.replaceWith(component.element)
 
     bindStyles(component)
