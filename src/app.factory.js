@@ -99,13 +99,28 @@ export const createApp = (selector, mainFactory, router = null) => {
     }
   }
 
+  const bindSlotElements = (component) => {
+    const inputSlotElements  = Array.from(component.refElement.querySelectorAll('slot'))
+
+    inputSlotElements.forEach( inputElement => {
+      const outputId = inputElement.id
+      const outputElement = component.element.querySelector(`[slot-id="${outputId}"]`)
+      outputElement.outerHTML = inputElement.innerHTML
+    })
+  }
+
   const render = (component, payload = {}) => {
     const state = component?.state?.get() || {}
     const { template, contextId, props } = component
 
     bindHook("beforeOnRender", component)
 
-    component.element.innerHTML = applyContext(template({ state, props, html, css, ...payload}), contextId)
+    component.element.innerHTML = applyContext(
+      template({ state, props, html, css, ...payload}), 
+      contextId
+    )
+
+    bindSlotElements(component)
     component.refElement.replaceWith(component.element)
 
     bindStyles(component)
