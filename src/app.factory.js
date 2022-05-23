@@ -52,7 +52,11 @@ export const createApp = (selector, mainFactory, router = null) => {
 
   const bindStyles = (component) => {
     const styleElement = document.createElement("style")
-    const styles = component.styles(component.selector, component.props)
+    const styles = component.styles({
+      ctx: component.selector, 
+      props: component.props,
+      css
+    })
     styleElement.innerHTML = applyContext(styles, component.contextId)
     document.querySelector("head").append(styleElement)
   }
