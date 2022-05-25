@@ -73,7 +73,7 @@ export const createApp = (selector, mainFactory, router = null) => {
     if (!keyHasFunction("hooks", component)) return
     const dom = domFactory(component.element)
     const hooks = component.hooks(dom)
-    executeHook(hookName, hooks, dom)
+    setTimeout(()=> executeHook(hookName, hooks, dom), 10)
   }
 
   const _getRefs = (containerElement, childrenSelector) => {
