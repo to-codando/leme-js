@@ -51,12 +51,18 @@ export const createApp = (selector, mainFactory, router = null) => {
   const applyContext = (text, id) => text.replace(/ctx-/gi, id)
 
   const bindStyles = (component) => {
+    const styleExists = document.querySelector(`style#${component.contextId}`)
+    if (styleExists) return;
+
     const styleElement = document.createElement("style")
+    styleElement.setAttribute('id', component.contextId)
+    
     const styles = component.styles({
       ctx: component.selector, 
       props: component.props,
       css
     })
+    
     styleElement.innerHTML = applyContext(styles, component.contextId)
     document.querySelector("head").append(styleElement)
   }
