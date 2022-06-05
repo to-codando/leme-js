@@ -1,6 +1,7 @@
 import { html, css } from './tagged.template'
 import { uuid } from "./uuid"
 import { domFactory } from "./dom.factory"
+import { dataBind } from './dataBind'
 
 export const createApp = (selector, mainFactory, router = null) => {
   const appElement = document.querySelector(selector)
@@ -24,7 +25,7 @@ export const createApp = (selector, mainFactory, router = null) => {
       const componentElement = createElement(selector)
       const props = refElement.dataset
       const contextId = uuid(selector)
-      const component = factory({ props, ...options })
+      const component = factory({ dataBind, props, ...options })
 
       for(let key in props) { 
         componentElement.setAttribute(`data-${key}`, props[key]) 
