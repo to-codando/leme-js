@@ -20,7 +20,8 @@ export const domFactory = (context) => {
     return {
         on,
         queryOnce,
-        queryAll
+        queryAll,
+        appElement: context
     }
 
 }

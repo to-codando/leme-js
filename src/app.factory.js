@@ -18,18 +18,27 @@ export const createApp = (selector, mainFactory, router = null) => {
     })
   }
 
+  const getPropsAsObject = (props) => {
+    const propsX = {}
+    for(let key in props) { 
+      propsX[key] = JSON.parse(props[key].replace(/\"/ig, '').replace(/\'/ig, '"'))
+    }    
+    return propsX
+  }
+
+  const toProp = (propName, propValue) => {
+    const dataValue = JSON.stringify(propValue).replace(/\"/ig, "'")
+    return `data-${propName}="${dataValue}"`
+  }  
+
   const createComponents = (factory, refElements = [], options = {}) => {
     const selector = createSelector(factory.name)
 
     return refElements.map( refElement => {
       const componentElement = createElement(selector)
-      const props = refElement.dataset
+      const props = getPropsAsObject(refElement.dataset)
       const contextId = uuid(selector)
       const component = factory({ dataBind, props, ...options })
-
-      for(let key in props) { 
-        componentElement.setAttribute(`data-${key}`, props[key]) 
-      }
 
       component.element = componentElement
       component.refElement = refElement
@@ -140,7 +149,7 @@ export const createApp = (selector, mainFactory, router = null) => {
     bindHook("beforeOnRender", component)
 
     component.element.innerHTML = applyContext(
-      template({ state, props, html, css, ...payload}), 
+      template({ state, props, toProp, html, css, ...payload}), 
       contextId
     )
 
