@@ -4,7 +4,6 @@ import { domFactory } from "./dom.factory"
 import { dataBind } from './dataBind'
 
 export const createApp = (selector, mainFactory, router = null) => {
-  const appElement = document.querySelector(selector)
 
   const hasState = (component) => 
     component.hasOwnProperty("state") && keyHasFunction("on", component.state) 
@@ -12,9 +11,8 @@ export const createApp = (selector, mainFactory, router = null) => {
   const watchState = (component) => {
     if(!hasState(component)) return
 
-    component.state.on((payload) => {
-      const parentElement = component.element.parentElement
-      render(component, parentElement, payload)
+    component.state.on((newState) => {
+      render(component, newState)
     })
   }
 
@@ -34,18 +32,20 @@ export const createApp = (selector, mainFactory, router = null) => {
   const createComponents = (factory, refElements = [], options = {}) => {
     const selector = createSelector(factory.name)
 
-    return refElements.map( refElement => {
+    return refElements.map( (refElement, index ) => {
       const componentElement = createElement(selector)
       const props = getPropsAsObject(refElement.dataset)
       const contextId = uuid(selector)
       const component = factory({ dataBind, props, ...options })
 
+      componentElement.setAttribute('ukey', index || 0)
       component.element = componentElement
       component.refElement = refElement
       component.parentElement = refElement.parentElement
       component.selector = selector
       component.props = props
-      component.contextId = contextId      
+      component.contextId = contextId    
+      component.ukey = index  
       watchState(component)
 
       return component
@@ -142,33 +142,43 @@ export const createApp = (selector, mainFactory, router = null) => {
     bindSingleSlot(component)
   }
 
-  const render = (component, payload = {}) => {
-    const state = component?.state?.get() || {}
+  const resetReferences = (component) => {
+    setTimeout(() => {
+      const selector = `${component.selector}[ukey="${component.ukey}"]`
+      component.refElement = document.querySelector(selector)
+      component.parentElement = component.refElement.parentElement
+    }, 1)
+  }
+
+  const render = async (component, payload = {}) => {
+    // const state = component?.state?.get() || {}
+    const state = {...component?.state?.get(), ...payload }
     const { template, contextId, props } = component
 
     bindHook("beforeOnRender", component)
 
     component.element.innerHTML = applyContext(
-      template({ state, props, toProp, html, css, ...payload}), 
+      template({ state, props, toProp, html, css }), 
       contextId
     )
 
     bindSlots(component)
     component.refElement.replaceWith(component.element)
+    resetReferences(component)
 
     bindStyles(component)
     bindHook("afterOnRender", component)
     renderChildren(component)
   }
 
-  const init = () => {
+  const init = async () => {
     const payload = {}
     const componentSelector = createSelector(mainFactory.name)
     const appElement = document.querySelector(selector)
     const refElements = _getRefs(appElement, componentSelector)
     const components = createComponents(mainFactory, refElements, payload)
 
-    render(components[0], payload)
+    await render(components[0], payload)
 
     if(!router) return
 
