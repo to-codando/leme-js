@@ -21,11 +21,19 @@ export const routerParamsFactory = () => {
 
     const getAll = () => [ ...params ]
 
+    const onChange = (callback) =>  {
+        window.onhashchange = () => {
+            const params = routerParamsFactory()
+            callback({ params: params.getAll() })
+        }
+    }
+
     return {
         getAll,
         getFirst,
         getLast,
-        getPosition
+        getPosition,
+        onChange
     }
 }
 
