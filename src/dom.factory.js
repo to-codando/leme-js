@@ -5,7 +5,7 @@ export const domFactory = (context) => {
         const elements = Array.isArray(target) ? target : [target]
 
         elements.forEach( element => {
-            element[`on${eventName}`] = handler 
+            element[`on${eventName}`] = (event) => handler({event, element})
         })
     }
 
