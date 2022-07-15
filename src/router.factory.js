@@ -1,3 +1,7 @@
+import { observerFactory } from "./observer.factory"
+
+const routeWatcher = observerFactory()
+
 export const routerParamsFactory = () => {
     const hash = window.location.hash.replace('#/', '')
     const params = hash.split('/')
@@ -22,10 +26,14 @@ export const routerParamsFactory = () => {
     const getAll = () => [ ...params ]
 
     const onChange = (callback) =>  {
-        window.onhashchange = () => {
+          routeWatcher.on(routeConfig => {
             const params = routerParamsFactory()
-            callback({ params: params.getAll() })
-        }
+            callback({ params: params.getAll(), routeConfig })            
+        })
+    }
+
+    const getConfig = () => {
+        return { ...routeWatcher.get() }
     }
 
     return {
@@ -33,6 +41,7 @@ export const routerParamsFactory = () => {
         getFirst,
         getLast,
         getPosition,
+        getConfig,
         onChange
     }
 }
@@ -65,9 +74,10 @@ export const routerFactory = () => {
     const _createSelector = (text) => 
         text.split(/(?=[A-Z])/).join("-").toLowerCase()
 
-    const _create = (factory) => {
-        const refElements = [_getRef(factory)]
-        const component = _createComponents(factory, refElements, {}).pop()
+    const _create = (route) => {
+        routeWatcher.set({...route})
+        const refElements = [_getRef(route.component)]
+        const component = _createComponents(route.component, refElements, {}).pop()
     
         _bindHook("beforeOnInit", component)
         _render(component, refElements, {})
@@ -89,19 +99,19 @@ export const routerFactory = () => {
 
             if(hash) {
                 const route = _getRouteByHash(hash)
-                return _create(route.component)
+                return _create(route)
             }
 
             const route = _getInitialRoute()
             _redirectTo(route.hash)
-            _create(route.component)
+            _create(route)
         })
     }    
 
     const _onHashChange = () => {
         window.addEventListener('hashchange', () => {
             const route = _getRouteByHash()
-            _create(route.component)
+            _create(route)
         })        
     }    
 
