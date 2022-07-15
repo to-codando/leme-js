@@ -17,16 +17,42 @@ export const createApp = (selector, mainFactory, router = null) => {
   }
 
   const getPropsAsObject = (props) => {
-    const propsX = {}
-    for(let key in props) { 
-      propsX[key] = JSON.parse(props[key].replace(/\"/ig, '').replace(/\'/ig, '"'))
-    }    
-    return propsX
+    const propsMap = JSON.parse(JSON.stringify(props))
+    const keysMap = Object.keys(propsMap)
+
+    const dataProps = {}
+
+    keysMap.forEach( key => {
+      dataProps[key] = JSON.stringify(propsMap[key]).replace(/\"/ig, "")
+    })
+    
+    return {...dataProps }
   }
 
-  const toProp = (propName, propValue) => {
-    const dataValue = JSON.stringify(propValue).replace(/\"/ig, "'")
-    return `data-${propName}="${dataValue}"`
+  const objectToDataset = (data) => {
+    const dataMap = JSON.stringify(data)
+
+    return dataMap
+      .replace(/{"(\w+)/g, 'data-$1')
+      .replace(/,\s*"(\w+)/g, ' data-$1')
+      .replace(/":/g, '=')
+      .replace(/}$/, '')
+  }
+
+  const ArrayToDataset = (data) => {
+    return data.map(objectToDataset).join(' ')
+  }
+
+  const toProp = (dataProps) => {
+
+    const isArray = Array.isArray(dataProps)
+
+    return isArray ?
+      ArrayToDataset(dataProps) :
+      objectToDataset(dataProps)
+
+
+
   }  
 
   const createComponents = (factory, refElements = [], options = {}) => {
@@ -151,7 +177,6 @@ export const createApp = (selector, mainFactory, router = null) => {
   }
 
   const render = async (component, payload = {}) => {
-    // const state = component?.state?.get() || {}
     const state = {...component?.state?.get(), ...payload }
     const { template, contextId, props } = component
 
